@@ -20,6 +20,7 @@ def generateSparkSubmitCommand(execParam):
 
 
 def single_submit_spark_job(execParam):
+    removeDataCommand = "hadoop fs -rmr "+json.loads(execParam)["removePath"]
     submitCommand = generateSparkSubmitCommand(execParam)
     start = time.time()
     print(submitCommand)
@@ -27,6 +28,9 @@ def single_submit_spark_job(execParam):
     print(str(status)+" "+result)
     end = time.time()
     print "JobName:"+json.loads(execParam)["name"]+" cost="+str(end-start)+"ms"
+    removeStatus,removeRes = commands.getstatusoutput(removeDataCommand)
+    print("JobName:"+json.loads(execParam)["name"]+"remove path status = "+str(removeStatus)+" removeRes="+str(removeRes))
+
 
 def batch_submit_spark_job(execPlanPath):
     file = open(execPlanPath)

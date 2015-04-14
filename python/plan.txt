@@ -1,2 +1,0 @@
-{"name":"PIJOB","class":"org.apache.spark.examples.SparkPi","master":"spark://207.184.161.138:7077","executor-memory":"20G","total-executor-cores":"100","appParam":"100"}
-{"name":"EXECJOB","class":"org.apache.spark.examples.SparkPi","master":"spark://207.184.161.138:7077","executor-memory":"20G","total-executor-cores":"100","appParam":"100"}
