@@ -5,14 +5,13 @@ try:
     import json
 except ImportError:
     import simplejson as json
-import commands
+import os
 import time
 
 def generateSparkSubmitCommand(execParam):
     paramJson = json.loads(execParam)
     sparkSubmitCommand = "spark-submit --class "+paramJson["class"]+ \
                                         " --master "+paramJson["master"]+ \
-                                        " --deploy-mode cluster "+ \
                                         " --executor-memory "+paramJson["executor-memory"]+ \
                                         " --total-executor-cores "+paramJson["total-executor-cores"]+ \
                                         " "+paramJson["appParam"]
@@ -24,12 +23,15 @@ def single_submit_spark_job(execParam):
     submitCommand = generateSparkSubmitCommand(execParam)
     start = time.time()
     print(submitCommand)
-    status,result = commands.getstatusoutput(submitCommand)
-    print(str(status)+" "+result)
+    status = os.system(submitCommand)
+    print(str(status)+" ")
     end = time.time()
-    print "JobName:"+json.loads(execParam)["name"]+" cost="+str(end-start)+"ms"
-    removeStatus,removeRes = commands.getstatusoutput(removeDataCommand)
-    print("JobName:"+json.loads(execParam)["name"]+"remove path status = "+str(removeStatus)+" removeRes="+str(removeRes))
+    print "JobName:"+json.loads(execParam)["name"]+" cost="+str(end-start)+"s  start time="+\
+          time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(start))+"  end time="+\
+          time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(end))
+
+    removeStatus = os.system(removeDataCommand)
+    print("JobName:"+json.loads(execParam)["name"]+"remove path status = "+str(removeStatus))
 
 
 def batch_submit_spark_job(execPlanPath):
