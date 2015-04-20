@@ -7,6 +7,7 @@ except ImportError:
     import simplejson as json
 import os
 import time
+import commands
 
 def generateSparkSubmitCommand(execParam):
     paramJson = json.loads(execParam)
@@ -18,6 +19,7 @@ def generateSparkSubmitCommand(execParam):
     return sparkSubmitCommand
 
 def generateDataGenCommand(execParam):
+    print("execParam="+execParam)
     paramJson = json.loads(execParam)
     sparkSubmitCommand = "spark-submit --master "+paramJson["master"]+ \
                                        " --executor-memory "+paramJson["executor-memory"]+ \
@@ -53,11 +55,11 @@ def single_submit_spark_job(execParam):
 
 def batch_submit_spark_job(execPlanPath,propertiesPath):
     file = open(execPlanPath)
-    while 1:
-        line = file.readline()
-        if not line:
+    execPlanJson = json.load(file)
+    for execPlan in execPlanJson:
+        if not execPlan:
             break
-        single_submit_spark_job(doPropertiesPlace(line,propertiesPath))
+        single_submit_spark_job(doPropertiesPlace(json.dumps(execPlan),propertiesPath))
 
 ## 替换变量属性
 def doPropertiesPlace(line,propertiesPath):
@@ -72,8 +74,13 @@ def doPropertiesPlace(line,propertiesPath):
     return line
 
 def startTsar(ipPath,homedir):
-    print("pssh -h "+ipPath+" \"tsar --io --traffic --cpu --mem > "+homedir+"/tsar.log \" ")
-    os.system("pssh -h "+ipPath+" \"tsar --io --traffic --cpu --mem > "+homedir+"/tsar.log \" ")
+    print("pssh -h "+ipPath+" \"tsar --io --traffic --cpu --mem -li5 > "+homedir+"/tsar.log \" ")
+    commands.getstatusoutput("pssh -h "+ipPath+" \"tsar --io --traffic --cpu --mem -li5  > "+homedir+"/tsar.log \" ")
+
+## kill 掉tsar进程
+def killTsarProcess(killScriptPath,name,ipPath):
+    print("pssh -h "+ipPath+" bash "+killScriptPath+" "+name)
+    os.system("pssh -h "+ipPath+" python "+killScriptPath+" "+name)
 
 def collectTsar(userName,ipPath,srcFile,targetDir):
     file = open(ipPath)
@@ -88,16 +95,23 @@ def collectTsar(userName,ipPath,srcFile,targetDir):
 if __name__ == "__main__":
     ## 默认参数
     userName = "jianying.wcj"
+    ## 描述slave机器ip地址信息的文件
     ipPath = "./ip.txt"
+
     homeDir = "/home/"+userName
+    ## 远端机器的tsar.log所在的目录
     srcFile = homeDir+"/tsar.log"
+    ## tsar日志要收集到的目录
     targetDir = "./tsarstat/"
 
     if len(sys.argv) < 3:
         print("plan file path and properties file path parameter expected,please rerun the job with the parameter.")
     else :
-        startTsar(ipPath,homeDir)
         execPlanPath = sys.argv[1]
         propertiesPath = sys.argv[2]
+        killProcessByNamePath = sys.argv[3]
+        ## run program
+        killTsarProcess(killProcessByNamePath,"tsar",ipPath)
+        startTsar(ipPath,homeDir)
         batch_submit_spark_job(execPlanPath,propertiesPath)
         collectTsar(userName,ipPath,srcFile,targetDir)
