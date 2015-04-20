@@ -51,13 +51,25 @@ def single_submit_spark_job(execParam):
     print(json.loads(execParam)["name"]+" 删除测试数据... exec status="+str(removeStatus))
 
 
-def batch_submit_spark_job(execPlanPath):
+def batch_submit_spark_job(execPlanPath,propertiesPath):
     file = open(execPlanPath)
     while 1:
         line = file.readline()
         if not line:
             break
-        single_submit_spark_job(line)
+        single_submit_spark_job(doPropertiesPlace(line,propertiesPath))
+
+## 替换变量属性
+def doPropertiesPlace(line,propertiesPath):
+    file = open(propertiesPath)
+    while 1:
+        prop = file.readline()
+        if not prop:
+            break
+        propKV = prop.split("=")
+        line = line.replace("${"+propKV[0].strip()+"}",propKV[1].strip())
+    print("replace line="+line)
+    return line
 
 def startTsar(ipPath,homedir):
     print("pssh -h "+ipPath+" \"tsar --io --traffic --cpu --mem > "+homedir+"/tsar.log \" ")
@@ -81,10 +93,11 @@ if __name__ == "__main__":
     srcFile = homeDir+"/tsar.log"
     targetDir = "./tsarstat/"
 
-    if len(sys.argv) < 2:
-        print("plan file path parameter expected,please rerun the job with the parameter.")
+    if len(sys.argv) < 3:
+        print("plan file path and properties file path parameter expected,please rerun the job with the parameter.")
     else :
         startTsar(ipPath,homeDir)
         execPlanPath = sys.argv[1]
-        batch_submit_spark_job(execPlanPath)
+        propertiesPath = sys.argv[2]
+        batch_submit_spark_job(execPlanPath,propertiesPath)
         collectTsar(userName,ipPath,srcFile,targetDir)
