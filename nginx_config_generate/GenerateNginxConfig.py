@@ -1,4 +1,3 @@
-__author__ = 'jianying.wcj'
 #coding=utf-8
 import sys
 import os
@@ -34,8 +33,7 @@ def doGenerateUpstreamServerConfig(sparkHostInfoPath):
     serverStreamStr += serverStreamMasterItem+os.linesep
 
     for hostInfo in hostInfoLines:
-        hostInfoList = hostInfo.split(" ")
-        print("tuple="+str(hostInfoList))
+        hostInfoList = hostInfo.split()
         upStreamItem = upStreamPlaceTemplate.replace("${hostname}",hostInfoList[1].strip())\
                                             .replace("${host}",hostInfoList[0].strip())\
                                             .replace("${port}","8081")
@@ -45,6 +43,7 @@ def doGenerateUpstreamServerConfig(sparkHostInfoPath):
         serverStreamStr += serverStreamItem.rstrip()+os.linesep
     return (upStreamStr,serverStreamStr)
 
+## 替换原有nginx的配置文件
 ## 替换原有nginx的配置文件
 def doUpdateNginxConfigFile(resultContent,nginxConfigTagetPath):
     nginxConfigFile = file(nginxConfigTagetPath,"w")
@@ -66,7 +65,6 @@ def generateConfigFile(sparkHostInfoPath,nginxConfigTemplatePath,nginxConfigTage
      ##替换占位符
      resultContent = resultContent.replace(upStreamPlaceHolder,nginxUpstreamServerTuple[0]) \
                   .replace(serverPlaceHolder,nginxUpstreamServerTuple[1])
-     print("resultContent="+resultContent)
      ##更新配置文件
      doUpdateNginxConfigFile(resultContent,nginxConfigTagetPath)
 
